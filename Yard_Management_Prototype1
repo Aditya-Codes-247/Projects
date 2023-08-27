@@ -1,0 +1,80 @@
+import heapq
+
+class ContainerYard:
+    def __init__(self):
+        self.container_heap = []  # Priority queue for containers
+        self.container_positions = {}  # Dictionary to store container positions
+        self.container_id = []
+
+    import numpy as np
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from keras.models import Sequential
+from keras.layers import LSTM, Dense
+
+# Load the dataset (replace 'data.csv' with your actual file)
+data = pd.read_csv('data.csv')
+
+# Select relevant features
+selected_features = ['company_id', 'import_date', 'export_date']
+data = data[selected_features]
+
+# Convert dates to numeric values (you may need more preprocessing here)
+data['import_date'] = pd.to_datetime(data['import_date']).astype(int) / 10**9
+
+# Normalize features
+scaler = StandardScaler()
+data[['company_id', 'import_date']] = scaler.fit_transform(data[['company_id', 'import_date']])
+
+# Split dataset into input (X) and target (y)
+X = data[['company_id', 'import_date']].values
+y = data['export_date'].values
+
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Reshape input data for LSTM (samples, timesteps, features)
+X_train = X_train.reshape(X_train.shape[0], 1, X_train.shape[1])
+X_test = X_test.reshape(X_test.shape[0], 1, X_test.shape[1])
+
+# Create the LSTM model
+model = Sequential()
+model.add(LSTM(units=50, activation='relu', input_shape=(1, X_train.shape[2])))
+model.add(Dense(units=1))
+model.compile(optimizer='adam', loss='mean_squared_error')
+
+# Train the model
+model.fit(X_train, y_train, epochs=50, batch_size=32)
+
+# Evaluate the model
+loss = model.evaluate(X_test, y_test)
+print(f'Mean Squared Error: {loss}')
+
+# Make predictions
+predictions = model.predict(X_test)
+
+# You can use 'predictions' to estimate the export date for new data
+yard = ContainerYard()
+
+# Adding containers with their priorities
+num = int(input("Enter the number of containers: "))
+for i in range(num):
+    com_id = int(input("Enter the company ID of container: "))
+    con_id = int(input("Enter the container ID: "))
+    pr = int(input("Enter the priority of the container: "))
+    yard.add_container(com_id, pr, con_id)
+
+# Printing initial container order
+def show_order():
+    yard.print_container_order()
+
+# Removing Container
+def rem_con(con_id):
+    removed_container = yard.remove_container(con_id)
+    print("Removed Container:", removed_container)
+    
+show_order()
+id = int(input("Enter the container id to be removed: "))
+rem_con(id)
+show_order()  # Display updated container order
